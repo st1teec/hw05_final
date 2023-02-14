@@ -75,11 +75,11 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ('-created',)
-        verbose_name = 'Пост'
-        verbose_name_plural = 'Посты'
+        verbose_name = 'комментарий'
+        verbose_name_plural = 'комментарии'
 
     def __str__(self):
-        return self.text
+        return self.text[:15]
 
 
 class Follow(models.Model):
@@ -95,3 +95,18 @@ class Follow(models.Model):
         related_name='following',
         verbose_name='автор на которого подписываешься'
     )
+
+    class Meta:
+        verbose_name = 'подписчик'
+        verbose_name_plural = 'Подписчики'
+        constraints = (
+            models.UniqueConstraint(
+                fields=('user', 'author'),
+                name='follow_user_author_constraint'
+            ),
+        )
+
+    def __str__(self):
+        return (
+            f'Пользователь {self.user} подписан на {self.author}'
+        )
