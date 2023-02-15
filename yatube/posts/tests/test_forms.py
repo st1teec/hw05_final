@@ -1,8 +1,10 @@
-from http import HTTPStatus
+import shutil
+import tempfile
 
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+from django.conf import settings
 
 from ..models import Comment, Group, Post, User
 
@@ -20,8 +22,10 @@ SMALL_GIF = (
     b'\x02\x00\x01\x00\x00\x02\x02\x0C'
     b'\x0A\x00\x3B'
 )
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostFormTests(TestCase):
 
     @classmethod
@@ -60,6 +64,11 @@ class PostFormTests(TestCase):
         cls.another = Client()
         cls.another.force_login(cls.another_user)
 
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+
     def test_create_post(self):
         """Валидная форма создает запись в Post."""
         Post.objects.all().delete()
@@ -85,9 +94,7 @@ class PostFormTests(TestCase):
         self.assertEqual(post.text, form_data['text'])
         self.assertEqual(post.author, self.user)
         self.assertEqual(post.group.id, form_data['group'])
-        self.assertTrue(
-            str(form_data['image']).split('.')[0] in str(post.image.file)
-        )
+        self.assertTrue(Post.objects.filter(image='posts/small.gif').exists())
 
     def test_guest_cant_create_post(self):
         """неавторизованный пользователь не может создать пост"""
@@ -126,10 +133,7 @@ class PostFormTests(TestCase):
         self.assertEqual(post.text, form_data["text"])
         self.assertEqual(post.author, self.post.author)
         self.assertEqual(post.group.id, form_data["group"])
-        self.assertTrue(
-            str(form_data['image']).split('.')[0] in str(post.image.file)
-        )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertTrue(Post.objects.filter(image='posts/small.gif').exists())
 
     def test_guest_and_not_author_cant_edit_post(self):
         """неавторизованный пользователь и неавтор
