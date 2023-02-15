@@ -28,21 +28,22 @@ class PostModelTest(TestCase):
             text='длинный тестовый комментарий более 15 символов'
         )
 
-    def test_model_Group_have_correct_object_names(self):
+    def test_model_group_have_correct_object_names(self):
         """Проверяем, что у модели Group корректно работает __str__."""
         self.assertEqual(str(self.group), self.group.title)
 
-    def test_model_Post_have_correct_object_names(self):
+    def test_model_post_have_correct_object_names(self):
         """Проверяем, что у модели Post корректно работает __str__."""
         self.assertEqual(str(self.post), self.post.text[:15])
 
-    def test_model_Follow_have_correct_object_names(self):
+    def test_model_follow_have_correct_object_names(self):
         """Проверяем, что у модели Follow корректно работает __str__."""
         self.assertEqual(
             str(self.follow),
-            f'Пользователь {self.follow.user} подписан на {self.follow.author}'
+            f'Пользователь {str(self.follow.user)} '
+            f'подписан на {str(self.follow.author)}'
         )
 
-    def test_model_Comment_have_correct_object_names(self):
+    def test_model_comment_have_correct_object_names(self):
         """Проверяем, что у модели Comment корректно работает __str__."""
         self.assertEqual(str(self.comment), self.comment.text[:15])

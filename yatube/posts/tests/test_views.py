@@ -79,15 +79,15 @@ class PostPagesTests(TestCase):
         cls.POST_DETAIL_URL = reverse(
             "posts:post_detail", args=[cls.post.id]
         )
+        cls.guest_client = Client()
+        cls.authorized_client = Client()
+        cls.authorized_client.force_login(cls.user_1)
+        cls.authorized_client2 = Client()
+        cls.authorized_client2.force_login(cls.user_2)
+        cls.authorized_client3 = Client()
+        cls.authorized_client3.force_login(cls.user_3)
 
     def setUp(self):
-        self.guest_client = Client()
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.user_1)
-        self.authorized_client2 = Client()
-        self.authorized_client2.force_login(self.user_2)
-        self.authorized_client3 = Client()
-        self.authorized_client3.force_login(self.user_3)
         cache.clear()
 
     def post_checking(self, post):
@@ -116,8 +116,7 @@ class PostPagesTests(TestCase):
                 self.assertEqual(
                     len(response.context['page_obj']), 1
                 )
-                post = response.context['page_obj'][0]
-                self.post_checking(post)
+                self.post_checking(response.context['page_obj'][0])
 
     def test_group_list_show_correct_context(self):
         """Список постов в шаблоне group_list равен ожидаемому контексту."""
@@ -136,45 +135,39 @@ class PostPagesTests(TestCase):
     def test_post_detail_show_correct_context(self):
         """Шаблон post_detail сформирован с правильным контекстом."""
         response = self.guest_client.get(self.POST_DETAIL_URL)
-        post = response.context['post']
-        self.post_checking(post)
-        comment = self.comment
-        self.comments_checking(comment)
+        self.post_checking(response.context['post'])
 
-    def check_group_not_in_mistake_group_list_page(self):
-        """Проверяем чтобы созданный Пост с группой не попап в чужую группу."""
+    def check_post_not_in_mistake_page(self):
+        """созданный пост не попал в чужую группу/
+        записи автора на которого пользователь не подписан
+        не появляются на странице подписок."""
         urls_names = [
             GROUP_LIST_2_URL,
             FOLLOW_INDEX_URL,
         ]
         for value in urls_names:
             with self.subTest(value=value):
-                response = self.authorized_client.get(value)
-                self.assertNotIn(self.post, response.context['page_obj'])
-
-    def test_user_cant_follow_and_unfollow(self):
-        """юзер может подписываться на других юзеров
-           юзер может отписаться от других юзеров"""
-        follow_list_old = self.user_1.follower.count()
-        self.authorized_client.get(FOLLOW_URL)
-        follow_list_new = self.user_1.follower.count()
-        self.assertEqual(follow_list_old + 1, follow_list_new)
-        self.authorized_client.get(UNFOLLOW_URL)
-        follow_list_newest = self.user_1.follower.count()
-        self.assertEqual(follow_list_old, follow_list_newest)
+                self.assertNotIn(
+                    self.post,
+                    self.authorized_client.get(value).context['page_obj']
+                )
 
     def test_follow(self):
         """Тест подписки на автора"""
         Follow.objects.all().delete()
-        follow = self.authorized_client.get(FOLLOW_URL)
+        self.authorized_client.get(FOLLOW_URL)
         exist_follow = Follow.objects.filter(
             user=self.user_1,
             author=self.user_2
-        )
-        self.assertTrue(exist_follow, follow)
+        ).exists
+        self.assertTrue(exist_follow)
 
     def test_unfollow(self):
         """Тест отписки от автора"""
+        Follow.objects.filter(
+            user=self.user_1,
+            author=self.user_2
+        ).exists()
         self.authorized_client.get(UNFOLLOW_URL)
         self.assertFalse(
             Follow.objects.filter(

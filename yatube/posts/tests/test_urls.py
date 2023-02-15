@@ -16,7 +16,10 @@ GROUP_LIST_URL = reverse(
 REDIR_URL_CREATE = f"{LOGIN_URL}?next={POST_CREATE_URL}"
 FOLLOW_INDEX_URL = reverse("posts:follow_index")
 PROFILE_FOLLOW_URL = reverse("posts:profile_follow", args={USERNAME})
+REDIR_PROFILE_FOLLOW_URL = f"{LOGIN_URL}?next={PROFILE_FOLLOW_URL}"
 PROFILE_UNFOLLOW_URL = reverse("posts:profile_unfollow", args={USERNAME})
+REDIR_PROFILE_UNFOLLOW_URL = f"{LOGIN_URL}?next={PROFILE_UNFOLLOW_URL}"
+REDIR_URL_FOLLOW_INDEX = f"{LOGIN_URL}?next={FOLLOW_INDEX_URL}"
 
 
 class PostURLTests(TestCase):
@@ -41,13 +44,14 @@ class PostURLTests(TestCase):
         )
         cls.REDIR_URL_EDIT = f"{LOGIN_URL}?next={cls.POST_EDIT_URL}"
         cls.ADD_COMMENT_URL = reverse("posts:add_comment", args=[cls.post.id])
+        cls.REDIR_URL_ADD_COMMENT = f"{LOGIN_URL}?next={cls.ADD_COMMENT_URL}"
+        cls.guest = Client()
+        cls.author = Client()
+        cls.author.force_login(cls.user_1)
+        cls.another = Client()
+        cls.another.force_login(cls.user_2)
 
     def setUp(self):
-        self.guest = Client()
-        self.author = Client()
-        self.author.force_login(self.user_1)
-        self.another = Client()
-        self.another.force_login(self.user_2)
         cache.clear()
 
     def test_pages_uses_correct_template(self):
@@ -60,7 +64,6 @@ class PostURLTests(TestCase):
             self.POST_EDIT_URL: "posts/create_post.html",
             POST_CREATE_URL: "posts/create_post.html",
             FOLLOW_INDEX_URL: "posts/follow.html",
-            '/unexisting_page/': "core/404.html"
         }
         for template, reverse_name in templates_pages_names.items():
             with self.subTest(reverse_name=reverse_name):
@@ -83,6 +86,11 @@ class PostURLTests(TestCase):
             (self.POST_EDIT_URL, self.another, 302),
             (self.ADD_COMMENT_URL, self.guest, 302),
             (FOLLOW_INDEX_URL, self.guest, 302),
+            (PROFILE_FOLLOW_URL, self.author, 302),
+            (PROFILE_FOLLOW_URL, self.another, 302),
+            (PROFILE_FOLLOW_URL, self.guest, 302),
+            (PROFILE_UNFOLLOW_URL, self.guest, 302),
+            (PROFILE_UNFOLLOW_URL, self.another, 302),
             ('/unexisting_page/', self.author, 404)
         ]
         for url, client, status in cases:
@@ -95,9 +103,13 @@ class PostURLTests(TestCase):
             (POST_CREATE_URL, self.guest, REDIR_URL_CREATE),
             (self.POST_EDIT_URL, self.guest, self.REDIR_URL_EDIT),
             (self.POST_EDIT_URL, self.another, self.POST_DETAIL_URL),
+            (self.ADD_COMMENT_URL, self.guest, self.REDIR_URL_ADD_COMMENT),
+            (FOLLOW_INDEX_URL, self.guest, REDIR_URL_FOLLOW_INDEX),
             (PROFILE_FOLLOW_URL, self.another, PROFILE_URL),
-            (PROFILE_UNFOLLOW_URL, self.another, PROFILE_URL),
             (PROFILE_FOLLOW_URL, self.author, PROFILE_URL),
+            (PROFILE_FOLLOW_URL, self.guest, REDIR_PROFILE_FOLLOW_URL),
+            (PROFILE_UNFOLLOW_URL, self.another, PROFILE_URL),
+            (PROFILE_UNFOLLOW_URL, self.guest, REDIR_PROFILE_UNFOLLOW_URL)
         ]
         for url, client, redirect in cases:
             with self.subTest(url=url, client=client, redirect=redirect):

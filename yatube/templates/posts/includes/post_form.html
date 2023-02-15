@@ -1,6 +1,7 @@
 {% load thumbnail %}
 <article>
     <ul>
+    {% if not profile %}  
       <li>
         Автор:
         <a href="{% url 'posts:profile' post.author.username %}"
@@ -8,6 +9,7 @@
           {{ post.author.get_full_name }}
           </a>
       </li>
+    {% endif %}
       <li>
         Дата публикации: {{ post.pub_date|date:"d E Y" }}
       </li>
@@ -18,10 +20,12 @@
     <p>
       {{post.text|linebreaks}}
     </p>
-    {% if post.group %}
-      <a
-        href="{% url 'posts:group_list' post.group.slug %}"
-        >#{{post.group}}</a>
+    {% if not group_list %}
+      {% if post.group %}
+        <a
+          href="{% url 'posts:group_list' post.group.slug %}"
+          >#{{post.group}}</a>
+      {% endif %}
     {% endif %}
     <p>
     <a href="{% url 'posts:post_detail' post.id %}">подробная информация </a>

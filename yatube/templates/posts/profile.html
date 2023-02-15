@@ -10,8 +10,7 @@
     <h3>Всего подписок: {{ author.follower.count }}</h3>
     <h3>Всего подписчиков: {{ author.following.count }}</h3>
     <h3>Всего комментариев: {{ author.comments.count }}</h3>
-    {% if user.is_authenticated %}
-      {% if user != author%}
+    {% if user.is_authenticated and user != author%}
         {% if following %}
           <a class="btn btn-lg btn-light"
              href="{% url 'posts:profile_unfollow' author.username %}"
@@ -21,11 +20,10 @@
                href="{% url 'posts:profile_follow' author.username %}"
                role="button">Подписаться</a>
         {% endif %}
-      {% endif %}
     {% endif %}    
     {% for post in page_obj %}
-      {% include 'includes/post_form.html' %}
+      {% include 'posts/includes/post_form.html' with profile=True %}
       {% if not forloop.last %}<hr>{% endif %} 
     {% endfor %}      
-  {% include 'includes/paginator.html' %}
+  {% include 'posts/includes/paginator.html' %}
 {% endblock %}

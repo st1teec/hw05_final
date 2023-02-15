@@ -3,12 +3,11 @@
   избранные авторы
 {% endblock %}
 {% block content %}
-{% include 'includes/switcher.html' %}
-<div class="container py-5">
-  <h1>избранные авторы</h1>
-  {% for post in page_obj %}
-    {% include 'includes/post_form.html' %}    
-    {% if not forloop.last %}<hr>{% endif %} 
-  {% endfor %}
-  {% include 'includes/paginator.html' %}
+  {% include 'posts/includes/switcher.html' with follow=True %}
+    <h1>избранные авторы</h1>
+    {% for post in page_obj %}
+      {% include 'posts/includes/post_form.html' %}    
+      {% if not forloop.last %}<hr>{% endif %} 
+    {% endfor %}
+  {% include 'posts/includes/paginator.html' %}
 {% endblock %}

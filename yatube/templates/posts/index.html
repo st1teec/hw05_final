@@ -3,13 +3,11 @@
   главная страница
 {% endblock %}
 {% block content %}
-{% include 'includes/switcher.html' %} 
-  <h1>главная страница</h1>
-  {% for post in page_obj %}
-    {% include 'includes/post_form.html' %}    
-    {% if not forloop.last %}<hr>{% endif %} 
-  {% endfor %}
-
-  {% include 'includes/paginator.html' %}
-
+  {% include 'posts/includes/switcher.html' with index=True %} 
+    <h1>главная страница</h1>
+    {% for post in page_obj %}
+      {% include 'posts/includes/post_form.html' %}    
+      {% if not forloop.last %}<hr>{% endif %} 
+    {% endfor %}
+  {% include 'posts/includes/paginator.html' %}
 {% endblock %}

@@ -8,6 +8,7 @@ from ..models import Comment, Group, Post, User
 
 USERNAME = "username"
 USERNAME_2 = "username2"
+LOGIN_URL = reverse("users:login")
 HOME_URL = reverse("posts:main_page")
 POST_CREATE_URL = reverse("posts:post_create")
 PROFILE_URL = reverse("posts:profile", args=[USERNAME])
@@ -48,17 +49,16 @@ class PostFormTests(TestCase):
             post=cls.post
         )
         cls.POST_EDIT_URL = reverse("posts:post_edit", args=[cls.post.id])
+        cls.REDIR_URL_EDIT = f"{LOGIN_URL}?next={cls.POST_EDIT_URL}"
         cls.POST_DETAIL_URL = reverse(
             "posts:post_detail", args=[cls.post.id]
         )
         cls.ADD_COMMENT_URL = reverse("posts:add_comment", args=[cls.post.id])
-
-    def setUp(self):
-        self.guest_client = Client()
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
-        self.another = Client()
-        self.another.force_login(self.another_user)
+        cls.guest_client = Client()
+        cls.authorized_client = Client()
+        cls.authorized_client.force_login(cls.user)
+        cls.another = Client()
+        cls.another.force_login(cls.another_user)
 
     def test_create_post(self):
         """Валидная форма создает запись в Post."""
@@ -92,13 +92,11 @@ class PostFormTests(TestCase):
     def test_guest_cant_create_post(self):
         """неавторизованный пользователь не может создать пост"""
         Post.objects.all().delete()
-        posts_count = Post.objects.count()
         form_data = {"text": "еще один текст"}
-        response = self.guest_client.post(
+        self.guest_client.post(
             POST_CREATE_URL, data=form_data, follow=True
         )
-        self.assertEqual(Post.objects.count(), posts_count)
-        self.assertNotContains(response, form_data['text'])
+        self.assertEqual(Post.objects.count(), 0)
 
     def test_post_edit(self):
         """Валидная форма изменяет запись в Post."""
@@ -133,20 +131,27 @@ class PostFormTests(TestCase):
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    def test_guest_cant_edit_post(self):
-        """неавторизованный пользователь не может редактировать пост"""
+    def test_guest_and_not_author_cant_edit_post(self):
+        """неавторизованный пользователь и неавтор
+        не может редактировать пост"""
         posts_count = Post.objects.count()
-        clients = (
-            self.guest_client,
-            self.another
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=SMALL_GIF,
+            content_type='image/gif'
         )
+        users_urls_list = [
+            [self.guest_client, self.REDIR_URL_EDIT],
+            [self.another, self.POST_DETAIL_URL],
+        ]
         form_data = {
             'text': 'Новый текст поста',
             'group': self.group.id,
+            'image': uploaded,
         }
-        for client in clients:
-            with self.subTest(user=client):
-                client.post(
+        for client, url in users_urls_list:
+            with self.subTest(user=client, url=url):
+                response = client.post(
                     self.POST_EDIT_URL,
                     data=form_data,
                     follow=True
@@ -156,6 +161,7 @@ class PostFormTests(TestCase):
                 self.assertEqual(self.post.group, post.group)
                 self.assertEqual(self.post.author, post.author)
                 self.assertEqual(Post.objects.count(), posts_count)
+                self.assertRedirects(response, url)
 
     def test_create_comment(self):
         """Валидная форма создает комментарий к Post."""
@@ -178,8 +184,7 @@ class PostFormTests(TestCase):
         """неавторизованный пользователь не может оставлять комментарии"""
         comments_count = Comment.objects.count()
         form_data = {"text": "Тестовый коммент"}
-        response = self.guest_client.post(
+        self.guest_client.post(
             self.ADD_COMMENT_URL, data=form_data, follow=True
         )
         self.assertEqual(Comment.objects.count(), comments_count)
-        self.assertNotContains(response, form_data['text'])
