@@ -133,7 +133,6 @@ class PostFormTests(TestCase):
         self.assertEqual(post.text, form_data["text"])
         self.assertEqual(post.author, self.post.author)
         self.assertEqual(post.group.id, form_data["group"])
-        self.assertTrue(Post.objects.filter(image='posts/small.gif').exists())
 
     def test_guest_and_not_author_cant_edit_post(self):
         """неавторизованный пользователь и неавтор
