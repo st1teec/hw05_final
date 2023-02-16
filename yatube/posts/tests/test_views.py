@@ -29,6 +29,7 @@ GROUP_LIST_2_URL = reverse(
 FOLLOW_INDEX_URL = reverse("posts:follow_index")
 FOLLOW_URL = reverse("posts:profile_follow", args=[USERNAME_2])
 UNFOLLOW_URL = reverse("posts:profile_unfollow", args=[USERNAME_2])
+UNFOLLOW_URL_FOR_USER2 = reverse("posts:profile_unfollow", args=[USERNAME_1])
 
 SMALL_GIF = (
     b'\x47\x49\x46\x38\x39\x61\x02\x00'
@@ -169,18 +170,16 @@ class PostPagesTests(TestCase):
 
     def test_unfollow(self):
         """Тест отписки от автора"""
-        Follow.objects.all().delete()
-        self.authorized_client.get(FOLLOW_URL)
         self.assertTrue(
             Follow.objects.filter(
-                user=self.user_1,
-                author=self.user_2
+                user=self.user_2,
+                author=self.user_1
             ).exists())
-        self.authorized_client.get(UNFOLLOW_URL)
+        self.authorized_client2.get(UNFOLLOW_URL_FOR_USER2)
         self.assertFalse(
             Follow.objects.filter(
-                user=self.user_1,
-                author=self.user_2
+                user=self.user_2,
+                author=self.user_1
             ).exists()
         )
 

@@ -40,8 +40,8 @@ class PostModelTest(TestCase):
         """Проверяем, что у модели Follow корректно работает __str__."""
         self.assertEqual(
             str(self.follow), FOLLOWING_STRING.format(
-                user_name=self.follow.user.username,
-                author_name=self.follow.author.username
+                user=self.follow.user.username,
+                author=self.follow.author.username
             )
         )
 

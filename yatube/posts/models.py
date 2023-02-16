@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 
 from yatube.settings import POST_IMAGE_UPLOAD_PATH
 User = get_user_model()
-FOLLOWING_STRING = 'Пользователь {user_name} подписан на {author_name}'
+FOLLOWING_STRING = 'Пользователь {user} подписан на {author}'
 
 
 class Group(models.Model):
@@ -109,6 +109,6 @@ class Follow(models.Model):
 
     def __str__(self):
         return FOLLOWING_STRING.format(
-            user_name=self.user.username,
-            author_name=self.author.username
+            user=self.user.username,
+            author=self.author.username
         )
