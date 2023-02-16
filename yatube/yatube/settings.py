@@ -73,6 +73,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'yatube.urls'
 TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
+POST_IMAGE_UPLOAD_PATH = 'posts/'
 
 TEMPLATES = [
     {

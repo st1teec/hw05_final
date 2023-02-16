@@ -6,6 +6,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.conf import settings
 
+from yatube.settings import POST_IMAGE_UPLOAD_PATH
 from ..models import Comment, Group, Post, User
 
 USERNAME = "username"
@@ -102,7 +103,7 @@ class PostFormTests(TestCase):
         self.assertEqual(post.group.id, form_data['group'])
         self.assertEqual(
             post.image.name,
-            Post.image.field.upload_to + form_data['image'].name
+            POST_IMAGE_UPLOAD_PATH + form_data['image'].name
         )
 
     def test_guest_cant_create_post(self):
@@ -144,7 +145,7 @@ class PostFormTests(TestCase):
         self.assertEqual(post.group.id, form_data["group"])
         self.assertEqual(
             post.image.name,
-            Post.image.field.upload_to + form_data['image'].name
+            POST_IMAGE_UPLOAD_PATH + form_data['image'].name
         )
 
     def test_guest_and_not_author_cant_edit_post(self):
@@ -176,10 +177,7 @@ class PostFormTests(TestCase):
                 self.assertEqual(self.post.text, post.text)
                 self.assertEqual(self.post.group, post.group)
                 self.assertEqual(self.post.author, post.author)
-                self.assertEqual(
-                    post.image.name,
-                    Post.image.field.upload_to + form_data['image'].name
-                )
+                self.assertEqual(self.post.image, post.image)
                 self.assertEqual(Post.objects.count(), posts_count)
                 self.assertRedirects(response, url)
 
@@ -208,11 +206,6 @@ class PostFormTests(TestCase):
             self.ADD_COMMENT_URL, data=form_data, follow=True
         )
         self.assertEqual(Comment.objects.count(), 0)
-        self.assertFalse(
-            Comment.objects.filter(
-                text=form_data["text"]
-            ).exists()
-        )
         self.assertRedirects(
             response,
             f'{LOGIN_URL}?next={self.ADD_COMMENT_URL}'

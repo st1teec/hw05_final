@@ -1,8 +1,9 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 
-
+from yatube.settings import POST_IMAGE_UPLOAD_PATH
 User = get_user_model()
+FOLLOWING_STRING = 'Пользователь {user_name} подписан на {author_name}'
 
 
 class Group(models.Model):
@@ -39,7 +40,7 @@ class Post(models.Model):
     )
     image = models.ImageField(
         'Картинка',
-        upload_to='posts/',
+        upload_to=POST_IMAGE_UPLOAD_PATH,
         blank=True
     )
 
@@ -106,14 +107,8 @@ class Follow(models.Model):
             ),
         )
 
-    def get_user_name(self):
-        return str(self.user)
-
-    def get_author_name(self):
-        return str(self.author)
-
     def __str__(self):
-        return (
-            f'Пользователь {self.get_user_name()}'
-            f' подписан на {self.get_author_name()}'
+        return FOLLOWING_STRING.format(
+            user_name=self.user.username,
+            author_name=self.author.username
         )

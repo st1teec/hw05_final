@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from ..models import Group, Post, User, Follow, Comment
+from ..models import Group, Post, User, Follow, Comment, FOLLOWING_STRING
 
 
 class PostModelTest(TestCase):
@@ -39,9 +39,10 @@ class PostModelTest(TestCase):
     def test_model_follow_have_correct_object_names(self):
         """Проверяем, что у модели Follow корректно работает __str__."""
         self.assertEqual(
-            str(self.follow),
-            f'Пользователь {str(self.follow.user)} '
-            f'подписан на {str(self.follow.author)}'
+            str(self.follow), FOLLOWING_STRING.format(
+                user_name=self.follow.user.username,
+                author_name=self.follow.author.username
+            )
         )
 
     def test_model_comment_have_correct_object_names(self):

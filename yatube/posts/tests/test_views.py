@@ -169,10 +169,18 @@ class PostPagesTests(TestCase):
 
     def test_unfollow(self):
         """Тест отписки от автора"""
+        Follow.objects.all().delete()
+        self.authorized_client.get(FOLLOW_URL)
+        self.assertTrue(
+            Follow.objects.filter(
+                user=self.user_1,
+                author=self.user_2
+            ).exists())
         self.authorized_client.get(UNFOLLOW_URL)
         self.assertFalse(
             Follow.objects.filter(
-                user=self.user_1, author=self.user_2
+                user=self.user_1,
+                author=self.user_2
             ).exists()
         )
 
