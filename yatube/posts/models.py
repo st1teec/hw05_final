@@ -106,7 +106,14 @@ class Follow(models.Model):
             ),
         )
 
+    def get_user_name(self):
+        return str(self.user)
+
+    def get_author_name(self):
+        return str(self.author)
+
     def __str__(self):
         return (
-            f'Пользователь {str(self.user)} подписан на {str(self.author)}'
+            f'Пользователь {self.get_user_name()}'
+            f' подписан на {self.get_author_name()}'
         )

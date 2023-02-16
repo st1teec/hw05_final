@@ -29,24 +29,26 @@ def group_list(request, slug):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    following = (
-        request.user.is_authenticated and Follow.objects.filter(
-            author=author, user=request.user
-        ).exists()
-    )
     return render(request, 'posts/profile.html', {
         'author': author,
         'page_obj': get_page(request, author.posts.all(), POSTS_FOR_PAGE),
-        'following': following
+        'following': (
+            request.user.is_authenticated
+            and request.user.username != username
+            and Follow.objects.filter(
+                author=author,
+                user=request.user
+            ).exists()
+        )
     })
 
 
 def post_detail(request, post_id):
-    post = get_object_or_404(
-        Post.objects.prefetch_related('comments'), id=post_id
-    )
     return render(request, 'posts/post_detail.html', {
-        'post': post,
+        'post': get_object_or_404(
+            Post.objects.prefetch_related('comments'),
+            id=post_id
+        ),
         'form': CommentForm(),
     })
 

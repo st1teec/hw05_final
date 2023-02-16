@@ -33,6 +33,11 @@ class PostFormTests(TestCase):
         super().setUpClass()
         cls.user = User.objects.create(username=USERNAME)
         cls.another_user = User.objects.create(username=USERNAME_2)
+        uploaded = SimpleUploadedFile(
+            name='small0.gif',
+            content=SMALL_GIF,
+            content_type='image/gif'
+        )
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='test-slug',
@@ -46,6 +51,7 @@ class PostFormTests(TestCase):
         cls.post = Post.objects.create(
             author=cls.user,
             text='Тестовый текст',
+            image=uploaded
         )
         cls.comment = Comment.objects.create(
             author=cls.user,
@@ -94,7 +100,10 @@ class PostFormTests(TestCase):
         self.assertEqual(post.text, form_data['text'])
         self.assertEqual(post.author, self.user)
         self.assertEqual(post.group.id, form_data['group'])
-        self.assertTrue(Post.objects.filter(image='posts/small.gif').exists())
+        self.assertEqual(
+            post.image.name,
+            Post.image.field.upload_to + form_data['image'].name
+        )
 
     def test_guest_cant_create_post(self):
         """неавторизованный пользователь не может создать пост"""
@@ -110,7 +119,7 @@ class PostFormTests(TestCase):
         posts_count = Post.objects.count()
 
         uploaded = SimpleUploadedFile(
-            name='small.gif',
+            name='small1.gif',
             content=SMALL_GIF,
             content_type='image/gif'
         )
@@ -133,13 +142,17 @@ class PostFormTests(TestCase):
         self.assertEqual(post.text, form_data["text"])
         self.assertEqual(post.author, self.post.author)
         self.assertEqual(post.group.id, form_data["group"])
+        self.assertEqual(
+            post.image.name,
+            Post.image.field.upload_to + form_data['image'].name
+        )
 
     def test_guest_and_not_author_cant_edit_post(self):
         """неавторизованный пользователь и неавтор
         не может редактировать пост"""
         posts_count = Post.objects.count()
         uploaded = SimpleUploadedFile(
-            name='small.gif',
+            name='small0.gif',
             content=SMALL_GIF,
             content_type='image/gif'
         )
@@ -163,6 +176,10 @@ class PostFormTests(TestCase):
                 self.assertEqual(self.post.text, post.text)
                 self.assertEqual(self.post.group, post.group)
                 self.assertEqual(self.post.author, post.author)
+                self.assertEqual(
+                    post.image.name,
+                    Post.image.field.upload_to + form_data['image'].name
+                )
                 self.assertEqual(Post.objects.count(), posts_count)
                 self.assertRedirects(response, url)
 
@@ -185,9 +202,18 @@ class PostFormTests(TestCase):
 
     def test_guest_cant_create_comment(self):
         """неавторизованный пользователь не может оставлять комментарии"""
-        comments_count = Comment.objects.count()
+        Comment.objects.all().delete()
         form_data = {"text": "Тестовый коммент"}
-        self.guest_client.post(
+        response = self.guest_client.post(
             self.ADD_COMMENT_URL, data=form_data, follow=True
         )
-        self.assertEqual(Comment.objects.count(), comments_count)
+        self.assertEqual(Comment.objects.count(), 0)
+        self.assertFalse(
+            Comment.objects.filter(
+                text=form_data["text"]
+            ).exists()
+        )
+        self.assertRedirects(
+            response,
+            f'{LOGIN_URL}?next={self.ADD_COMMENT_URL}'
+        )

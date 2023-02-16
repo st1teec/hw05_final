@@ -89,6 +89,7 @@ class PostURLTests(TestCase):
             (PROFILE_FOLLOW_URL, self.author, 302),
             (PROFILE_FOLLOW_URL, self.another, 302),
             (PROFILE_FOLLOW_URL, self.guest, 302),
+            (PROFILE_UNFOLLOW_URL, self.author, 404),
             (PROFILE_UNFOLLOW_URL, self.guest, 302),
             (PROFILE_UNFOLLOW_URL, self.another, 302),
             ('/unexisting_page/', self.author, 404)

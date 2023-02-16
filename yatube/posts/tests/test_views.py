@@ -109,11 +109,6 @@ class PostPagesTests(TestCase):
         self.assertEqual(post.image, self.post.image)
         self.assertEqual(post.group, self.post.group)
 
-    def comments_checking(self, comment):
-        self.assertEqual(comment.text, self.comment.text)
-        self.assertEqual(comment.author.username, self.comment.author.username)
-        self.assertEqual(comment.post, self.comment.post)
-
     def test_show_correct_context(self):
         urls_names = [
             HOME_URL,
@@ -167,18 +162,13 @@ class PostPagesTests(TestCase):
         """Тест подписки на автора"""
         Follow.objects.all().delete()
         self.authorized_client.get(FOLLOW_URL)
-        exist_follow = Follow.objects.filter(
+        self.assertTrue(Follow.objects.filter(
             user=self.user_1,
             author=self.user_2
-        ).exists
-        self.assertTrue(exist_follow)
+        ).exists)
 
     def test_unfollow(self):
         """Тест отписки от автора"""
-        Follow.objects.filter(
-            user=self.user_1,
-            author=self.user_2
-        ).exists()
         self.authorized_client.get(UNFOLLOW_URL)
         self.assertFalse(
             Follow.objects.filter(
